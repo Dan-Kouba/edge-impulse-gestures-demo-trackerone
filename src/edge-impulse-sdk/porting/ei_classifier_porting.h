@@ -123,6 +123,14 @@ void ei_free(void *ptr);
 #endif
 #endif
 
+#ifndef EI_PORTING_PARTICLE
+#ifdef PARTICLE
+#define EI_PORTING_PARTICLE      1
+#else
+#define EI_PORTING_PARTICLE      0
+#endif
+#endif
+
 #ifndef EI_PORTING_ECM3532
 #ifdef ECM3532
 #define EI_PORTING_ECM3532      1
