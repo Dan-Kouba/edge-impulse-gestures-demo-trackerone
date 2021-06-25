@@ -380,6 +380,7 @@ extern "C"
 
 #else
 #include "edge-impulse-sdk/CMSIS/Core/Include/cmsis_compiler.h"
+// #include "cmsis_compiler.h"
 #endif
 
 
@@ -2712,12 +2713,12 @@ void arm_mat_init_f32(
    */
   typedef struct
   {
-          q15_t A0;           /**< The derived gain, A0 = Kp + Ki + Kd . */
+          q15_t A0G;           /**< The derived gain, A0G = Kp + Ki + Kd . */
 #if !defined (ARM_MATH_DSP)
-          q15_t A1;
-          q15_t A2;
+          q15_t A1G;
+          q15_t A2G;
 #else
-          q31_t A1;           /**< The derived gain A1 = -Kp - 2Kd | Kd.*/
+          q31_t A1G;           /**< The derived gain A1G = -Kp - 2Kd | Kd.*/
 #endif
           q15_t state[3];     /**< The state array of length 3. */
           q15_t Kp;           /**< The proportional gain. */
@@ -2730,9 +2731,9 @@ void arm_mat_init_f32(
    */
   typedef struct
   {
-          q31_t A0;            /**< The derived gain, A0 = Kp + Ki + Kd . */
-          q31_t A1;            /**< The derived gain, A1 = -Kp - 2Kd. */
-          q31_t A2;            /**< The derived gain, A2 = Kd . */
+          q31_t A0G;            /**< The derived gain, A0G = Kp + Ki + Kd . */
+          q31_t A1G;            /**< The derived gain, A1G = -Kp - 2Kd. */
+          q31_t A2G;            /**< The derived gain, A2G = Kd . */
           q31_t state[3];      /**< The state array of length 3. */
           q31_t Kp;            /**< The proportional gain. */
           q31_t Ki;            /**< The integral gain. */
@@ -2744,9 +2745,9 @@ void arm_mat_init_f32(
    */
   typedef struct
   {
-          float32_t A0;          /**< The derived gain, A0 = Kp + Ki + Kd . */
-          float32_t A1;          /**< The derived gain, A1 = -Kp - 2Kd. */
-          float32_t A2;          /**< The derived gain, A2 = Kd . */
+          float32_t A0G;          /**< The derived gain, A0G = Kp + Ki + Kd . */
+          float32_t A1G;          /**< The derived gain, A1G = -Kp - 2Kd. */
+          float32_t A2G;          /**< The derived gain, A2G = Kd . */
           float32_t state[3];    /**< The state array of length 3. */
           float32_t Kp;          /**< The proportional gain. */
           float32_t Ki;          /**< The integral gain. */
@@ -5821,10 +5822,10 @@ void arm_correlate_fast_q31(
    *
    * \par Algorithm:
    * <pre>
-   *    y[n] = y[n-1] + A0 * x[n] + A1 * x[n-1] + A2 * x[n-2]
-   *    A0 = Kp + Ki + Kd
-   *    A1 = (-Kp ) - (2 * Kd )
-   *    A2 = Kd
+   *    y[n] = y[n-1] + A0G * x[n] + A1G * x[n-1] + A2G * x[n-2]
+   *    A0G = Kp + Ki + Kd
+   *    A1G = (-Kp ) - (2 * Kd )
+   *    A2G = Kd
    * </pre>
    *
    * \par
@@ -5842,7 +5843,7 @@ void arm_correlate_fast_q31(
    * and the derivative value determines the reaction based on the rate at which the error has been changing.
    *
    * \par Instance Structure
-   * The Gains A0, A1, A2 and state variables for a PID controller are stored together in an instance data structure.
+   * The Gains A0G, A1G, A2G and state variables for a PID controller are stored together in an instance data structure.
    * A separate instance structure must be defined for each PID Controller.
    * There are separate instance structure declarations for each of the 3 supported data types.
    *
@@ -5852,7 +5853,7 @@ void arm_correlate_fast_q31(
    * \par Initialization Functions
    * There is also an associated initialization function for each data type.
    * The initialization function performs the following operations:
-   * - Initializes the Gains A0, A1, A2 from Kp,Ki, Kd gains.
+   * - Initializes the Gains A0G, A1G, A2G from Kp,Ki, Kd gains.
    * - Zeros out the values in the state buffer.
    *
    * \par
@@ -5881,9 +5882,9 @@ void arm_correlate_fast_q31(
   {
     float32_t out;
 
-    /* y[n] = y[n-1] + A0 * x[n] + A1 * x[n-1] + A2 * x[n-2]  */
-    out = (S->A0 * in) +
-      (S->A1 * S->state[0]) + (S->A2 * S->state[1]) + (S->state[2]);
+    /* y[n] = y[n-1] + A0G * x[n] + A1G * x[n-1] + A2G * x[n-2]  */
+    out = (S->A0G * in) +
+      (S->A1G * S->state[0]) + (S->A2G * S->state[1]) + (S->state[2]);
 
     /* Update state */
     S->state[1] = S->state[0];
@@ -5915,14 +5916,14 @@ __STATIC_FORCEINLINE q31_t arm_pid_q31(
     q63_t acc;
     q31_t out;
 
-    /* acc = A0 * x[n]  */
-    acc = (q63_t) S->A0 * in;
+    /* acc = A0G * x[n]  */
+    acc = (q63_t) S->A0G * in;
 
-    /* acc += A1 * x[n-1] */
-    acc += (q63_t) S->A1 * S->state[0];
+    /* acc += A1G * x[n-1] */
+    acc += (q63_t) S->A1G * S->state[0];
 
-    /* acc += A2 * x[n-2]  */
-    acc += (q63_t) S->A2 * S->state[1];
+    /* acc += A2G * x[n-2]  */
+    acc += (q63_t) S->A2G * S->state[1];
 
     /* convert output to 1.31 format to add y[n-1] */
     out = (q31_t) (acc >> 31U);
@@ -5964,18 +5965,18 @@ __STATIC_FORCEINLINE q15_t arm_pid_q15(
 #if defined (ARM_MATH_DSP)
     /* Implementation of PID controller */
 
-    /* acc = A0 * x[n]  */
-    acc = (q31_t) __SMUAD((uint32_t)S->A0, (uint32_t)in);
+    /* acc = A0G * x[n]  */
+    acc = (q31_t) __SMUAD((uint32_t)S->A0G, (uint32_t)in);
 
-    /* acc += A1 * x[n-1] + A2 * x[n-2]  */
-    acc = (q63_t)__SMLALD((uint32_t)S->A1, (uint32_t)read_q15x2 (S->state), (uint64_t)acc);
+    /* acc += A1G * x[n-1] + A2G * x[n-2]  */
+    acc = (q63_t)__SMLALD((uint32_t)S->A1G, (uint32_t)read_q15x2 (S->state), (uint64_t)acc);
 #else
-    /* acc = A0 * x[n]  */
-    acc = ((q31_t) S->A0) * in;
+    /* acc = A0G * x[n]  */
+    acc = ((q31_t) S->A0G) * in;
 
-    /* acc += A1 * x[n-1] + A2 * x[n-2]  */
-    acc += (q31_t) S->A1 * S->state[0];
-    acc += (q31_t) S->A2 * S->state[1];
+    /* acc += A1G * x[n-1] + A2G * x[n-2]  */
+    acc += (q31_t) S->A1G * S->state[0];
+    acc += (q31_t) S->A2G * S->state[1];
 #endif
 
     /* acc += y[n-1] */
